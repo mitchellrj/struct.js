@@ -202,7 +202,7 @@ struct.pack = function(fmt) {
       }
     case 'p':
       val = args[0];
-      val = String.fromCharCode(min(val.length, 255)) + val;
+      val = String.fromCharCode(Math.min(val.length, 255)) + val;
       if (val.length>len) {
         val = val.slice(0,len);
       }
@@ -386,7 +386,7 @@ struct.unpack = function(fmt, string) {
       break;
     case 'p':
       var givenLen = string.charCodeAt(0);
-      val = [string.slice(1, min(givenLen, len))];
+      val = [string.slice(1, Math.min(givenLen, len))];
       break;
     case 'b':
     case 'h':
