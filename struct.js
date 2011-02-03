@@ -1,3 +1,19 @@
+/*
+ * Copyright 2011 Richard Mitchell
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * This module performs conversions between JavaScript values and C
  * structs represented as JavaScript strings. This can be used in
@@ -122,7 +138,7 @@ struct.pack = function(fmt) {
       for (var k=0;k<bitstring.length;k+=8) {
         result+=String.fromCharCode(parseInt(bitstring.substr(k, 8),2));
       }
-      if (big_endian) {
+      if (!big_endian) {
         var reversed = '';
         for(var j=result.length-1;j>=0;j--) {
           reversed+=result.charAt(j);
@@ -200,6 +216,7 @@ struct.pack = function(fmt) {
       while (val.length<len) {
         val = val + String.fromCharCode(0);
       }
+      break;
     case 'p':
       val = args[0];
       val = String.fromCharCode(Math.min(val.length, 255)) + val;
@@ -283,53 +300,47 @@ struct.unpack = function(fmt, string) {
 
   /*
    * Parse a single format block
+   * @param {string} fmt the format string
+   * @param {string} string the binary string
+   * @param {string} endian
+   * @return {string|number}
    */
   var parseBlock = function(fmt, string, endian) {
 
     /*
-     * Parse an unsigned integer
+     * Convert a binary string to an integer.
+     * @param {string} data
+     * @param {bool} signed
+     * @param {string} endian
+     * @return {number}
      */
-    var parseNum = function (data, endian) {
-      var i;
-      var ret;
+    var binToInt = function(data, signed, endian) {
       var big_endian = (endian === '>');
-      for (big_endian ? i = 0 : i = data.length - 1;
-      big_endian ? i < data.length : i >= 0;
-      big_endian ? i++ : i--) {
-        ret <<= 8;
-        ret += data.charCodeAt(i);
-      }
-      return ret;
-    };
-
-    /*
-     * Parse a signed integer
-     */
-    var parseSnum = function (data, endian) {
-      var i;
-      var ret;
-      var neg;
-      var big_endian = (endian === '>');
-      for (big_endian ? i = 0 : i = 0 + data.length - 1;
-      big_endian ? i < data.length : i >= 0;
-      big_endian ? i++ : i--) {
-        if (neg === undefined) {
-          neg = (data.charCodeAt(i) & 0x80) === 0x80;
+      var bitstring = '';
+      for(var i=big_endian ? 0 : data.length-1;
+          big_endian ? i<data.length : i>=0;
+          big_endian ? i++ : i--) {
+        var next = parseInt(data.charCodeAt(i)).toString(2);
+        while(next.length % 8) {
+          next = '0' + next;
         }
-        ret <<= 8;
-        ret += neg ? ~data.charCodeAt(i) & 0xff: data.charCodeAt(i);
+        bitstring += next;
       }
-      if (neg) {
-        ret += 1;
-        ret *= -1;
+      var sign = 1;
+      if (signed) {
+        sign = Math.pow(-1, parseInt(bitstring.charAt(0)));
+        bitstring = bitstring.slice(1);
       }
-      return ret;
+      return sign*parseInt(bitstring, 2);
     };
 
     /*
-     * Parse a floating point number
+     * Convert a binary string to a floating point number.
+     * @param {string} data
+     * @param {string} endian
+     * @return {number}
      */
-    var parseFP = function (data, endian) {
+    var binToFP = function (data, endian) {
       var ret;
       var exponent_size;
       var significand_size;
@@ -345,7 +356,7 @@ struct.unpack = function(fmt, string) {
         significand_size = 52;
         bias = 1023;
       }
-      var bitstring = parseNum(data, endian).toString(2);
+      var bitstring = binToInt(data, false, endian).toString(2);
       while (bitstring.length<data.length*8) {
         bitstring = '0'+bitstring;
       }
@@ -394,7 +405,7 @@ struct.unpack = function(fmt, string) {
     case 'l':
     case 'q':
       for (var i=0;i<len;i++) {
-        val.push(parseSnum(string.substr(struct.STANDARD_TYPE_LENGTHS[type]*i, struct.STANDARD_TYPE_LENGTHS[type]), endian));
+        val.push(binToInt(string.substr(struct.STANDARD_TYPE_LENGTHS[type]*i, struct.STANDARD_TYPE_LENGTHS[type]), true, endian));
       }
       break;
     case 'B':
@@ -405,14 +416,14 @@ struct.unpack = function(fmt, string) {
     case '?':
       for (var i=0;i<len;i++) {
         val = [];
-        val.push(parseNum(string.substr(struct.STANDARD_TYPE_LENGTHS[type]*i, struct.STANDARD_TYPE_LENGTHS[type]), endian));
+        val.push(binToInt(string.substr(struct.STANDARD_TYPE_LENGTHS[type]*i, struct.STANDARD_TYPE_LENGTHS[type]), false, endian));
       }
       break;
     case 'f':
     case 'd':
       for (var i=0;i<len;i++) {
         val = [];
-        val.push(parseFP(string.substr(struct.STANDARD_TYPE_LENGTHS[type]*i, struct.STANDARD_TYPE_LENGTHS[type]), endian));
+        val.push(binToFP(string.substr(struct.STANDARD_TYPE_LENGTHS[type]*i, struct.STANDARD_TYPE_LENGTHS[type]), endian));
       }
       break;
     case 'x':
