@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Richard Mitchell
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -101,6 +101,9 @@ struct.pack = function(fmt) {
     values.push(arguments[i]);
   }
   struct.validateFormat(fmt);
+  if (string.length!=total_length) {
+    throw "Data must be of length " + total_length;
+  }
   var endian = struct.getByteOrder(fmt);
 
   /*
@@ -387,7 +390,7 @@ struct.unpack = function(fmt, string) {
       len = parseInt(len);
     }
 
-    var val = null;
+    var val = [];
     switch (type) {
     case 'c':
       val = string.slice(0, len).split('');
@@ -415,28 +418,31 @@ struct.unpack = function(fmt, string) {
     case 'Q':
     case '?':
       for (var i=0;i<len;i++) {
-        val = [];
         val.push(binToInt(string.substr(struct.STANDARD_TYPE_LENGTHS[type]*i, struct.STANDARD_TYPE_LENGTHS[type]), false, endian));
       }
       break;
     case 'f':
     case 'd':
       for (var i=0;i<len;i++) {
-        val = [];
         val.push(binToFP(string.substr(struct.STANDARD_TYPE_LENGTHS[type]*i, struct.STANDARD_TYPE_LENGTHS[type]), endian));
       }
       break;
     case 'x':
     default:
-      val = null;
     }
     if (type=='?') {
-      val = !!val;
+      for (var i=0;i<len;i++) {
+        val[i] = !!val[i];
+      }
     }
     return val;
   };
 
   struct.validateFormat(fmt);
+  var total_length = struct.calcsize(fmt);
+  if (string.length!=total_length) {
+    throw "Data must be of length " + total_length;
+  }
   var result = [];
   var endian = struct.getByteOrder(fmt);
   fmt = new String(fmt);
@@ -450,12 +456,7 @@ struct.unpack = function(fmt, string) {
     var block_length = struct.calcsize(block_fmt);
     if (block_fmt.charAt(block_fmt.length-1)!='x') {
       var block = parseBlock(block_fmt, string.substr(0, block_length), endian);
-      if (block.shift) {
-        // is array
-        result = result.concat(block);
-      } else {
-        result.push(block);
-      }
+      result = result.concat(block);
     }
     string = string.slice(block_length);
     fmt = fmt.slice(block_fmt.length);
