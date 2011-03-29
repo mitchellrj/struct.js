@@ -2,17 +2,16 @@
 <head>
 <title>struct.js demo</title>
 <script type="text/javascript" src="struct.js"></script>
-<script type="text/javascript">
-var data = '\xea\x00\x00\x00hello\x00\x00\x00\x00\x00\xdb\x0fI@';
-console.log(struct.unpack('I10sf', '\xea\x00\x00\x00hello\x00\x00\x00\x00\x00\xdb\x0fI@'));
-var p = struct.pack('I10sf', 234, 'hello', 3.14159265358)
-console.log(struct.unpack('I10sf', p));
-console.log(struct.unpack('>I10sf', '\x00\x00\x00\xeahello\x00\x00\x00\x00\x00@I\x0f\xdb'));
-//console.log(struct.pack('>I10sf', 234, 'hello', 3.14159265358));
-console.log(struct.Struct('>I10sf').unpack('\x00\x00\x00\xeahello\x00\x00\x00\x00\x00@I\x0f\xdb'));
-//console.log(struct.Struct('>I10sf').pack(234, 'hello', 3.14159265358));
-</script>
 </head>
 <body>
+<dl>
+<script type="text/javascript">
+var data = '\xea\x00\x00\x00hello\x00\x00\x00\x00\x00\xdb\x0fI@';
+document.write('<dt>Unpack data packed by Python:</dt><dd>'+struct.unpack('I10sf', '\xea\x00\x00\x00hello\x00\x00\x00\x00\x00\xdb\x0fI@')+'</dd>');
+var p = struct.pack('I10sf', 234, 'hello', 3.14159265358)
+document.write('<dt>Unpack re-packed data:</dt><dd>'+struct.unpack('I10sf', p)+'</dd>');
+document.write('<dt>Unpack big-endian data packed by Python:</dt><dd>'+struct.unpack('>I10sf', '\x00\x00\x00\xeahello\x00\x00\x00\x00\x00@I\x0f\xdb')+'</dd>');
+</script>
+</dl>
 </body>
 </html>

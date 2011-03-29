@@ -101,9 +101,6 @@ struct.pack = function(fmt) {
     values.push(arguments[i]);
   }
   struct.validateFormat(fmt);
-  if (string.length!=total_length) {
-    throw "Data must be of length " + total_length;
-  }
   var endian = struct.getByteOrder(fmt);
 
   /*
