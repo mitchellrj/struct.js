@@ -386,7 +386,7 @@ struct.unpack = function(fmt, string) {
       len = 1;
       type = fmt.charAt(0);
     } else {
-      type = fmt.slice(len.length+1);
+      type = fmt.slice(String(len).length);
       len = parseInt(len);
     }
 
