@@ -36,7 +36,11 @@ BitStream.prototype.read = function(n) {
   var offset = 8 - this.currentPosition;
   var numWholeBytes = Math.floor(n/8);
   while (numWholeBytes>0) {
-    result = (this.getNextByte()<<offset) + result;
+    if (this.be) {
+      result = (result<<8) + this.getNextByte();
+    } else {
+      result = (this.getNextByte()<<offset) + result;
+    }
     offset = 8 + offset;
     numWholeBytes--;
   }
@@ -45,7 +49,12 @@ BitStream.prototype.read = function(n) {
   if (numBits>0) {
     this.currentByte = this.getNextByte();
     this.readBytes++;
-    result = ((this.currentByte & (Math.pow(2, numBits)-1))<<(8-this.currentPosition+8*Math.floor(n/8))) + result;
+    if (this.be) {
+      offset = 9-this.currentPosition;
+      result = (result<<offset) + (this.currentByte & (Math.pow(2, numBits)-1));
+    } else {
+      result = ((this.currentByte & (Math.pow(2, numBits)-1))<<(8-this.currentPosition+8*Math.floor(n/8))) + result;
+    }
   }
   result = result & (Math.pow(2, n) - 1);
   this.currentPosition = (8 + numBits);

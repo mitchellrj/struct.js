@@ -2,8 +2,7 @@ load('stringio.js');
 load('bitstream.js');
 
 var bytes = ['11111100', '01001000', '11001110', '00001110'];
-
-var reverse_bytes = ['00111111', '00010010', '01110011', '01110000'];
+var reverse_bytes = ['00111110', '10001011', '11100110', '10010000'];
 
 for (var i=0; i<bytes.length; i++) {
   bytes[i] = String.fromCharCode(parseInt(bytes[i], 2));
